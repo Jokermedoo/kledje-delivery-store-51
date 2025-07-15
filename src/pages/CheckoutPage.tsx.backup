@@ -1,0 +1,151 @@
+import { useState } from 'react';
+import { CartItem } from '@/types/product';
+import { User } from '@/types/auth';
+import Header from '@/components/Header';
+import CheckoutForm from '@/components/CheckoutForm';
+import InteractiveBackground from '@/components/InteractiveBackground';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, ShoppingCart } from 'lucide-react';
+
+interface CheckoutPageProps {
+  cartItems: CartItem[];
+  user: User;
+  cartItemsCount: number;
+  onOrderSubmit: (orderNumber: string) => void;
+  onBack: () => void;
+  onCartClick: () => void;
+  onLogin: () => void;
+  onLogout: () => void;
+}
+
+export default function CheckoutPage({
+  cartItems,
+  user,
+  cartItemsCount,
+  onOrderSubmit,
+  onBack,
+  onCartClick,
+  onLogin,
+  onLogout
+}: CheckoutPageProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleOrderSubmit = async (orderDetails: any) => {
+    setIsSubmitting(true);
+    try {
+      // Generate mock order number
+      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      onOrderSubmit(orderNumber);
+    } catch (error) {
+      console.error('Order submission failed:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  return (
+    <div className="min-h-screen bg-background relative">
+      <InteractiveBackground />
+      
+      <Header 
+        cartItemsCount={cartItemsCount} 
+        onCartClick={onCartClick} 
+        onSearchClick={() => {}}
+        user={user}
+        onLogin={onLogin}
+        onLogout={onLogout}
+      />
+
+      <div className="container mx-auto px-4 py-16">
+        {/* Back Button */}
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={onBack}
+            className="glass-card hover:bg-primary/5 font-tajawal"
+          >
+            <ArrowRight className="h-4 w-4 ml-2" />
+            العودة للتسوق
+          </Button>
+        </div>
+
+        {/* Page Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 glow-text font-amiri">
+            إتمام الطلب
+          </h1>
+          <p className="text-muted-foreground text-lg md:text-xl font-cairo">
+            أكمل بياناتك لإتمام عملية الشراء
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <div className="glass-card p-6 sticky top-8">
+              <h2 className="text-2xl font-bold mb-6 text-primary font-tajawal">
+                ملخص الطلب
+              </h2>
+
+              <div className="space-y-4 mb-6">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 p-4 bg-background/50 rounded-2xl">
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-16 h-16 object-cover rounded-xl"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm">{item.name}</h3>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-muted-foreground text-sm">
+                          الكمية: {item.quantity}
+                        </span>
+                        <span className="font-bold text-primary">
+                          {item.price * item.quantity} ج.م
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-muted-foreground">المجموع الفرعي:</span>
+                  <span className="font-semibold">{total} ج.م</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-muted-foreground">الشحن:</span>
+                  <span className="font-semibold text-green-600">مجاني</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold text-primary border-t pt-2">
+                  <span>الإجمالي:</span>
+                  <span>{total} ج.م</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Checkout Form */}
+          <div className="lg:col-span-2">
+            <div className="glass-card p-8">
+              <CheckoutForm 
+                cartItems={cartItems}
+                user={user}
+                onSubmit={handleOrderSubmit}
+                isSubmitting={isSubmitting}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

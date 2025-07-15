@@ -1,0 +1,221 @@
+import { OrderDetails } from '@/types/product';
+import { User } from '@/types/auth';
+import Header from '@/components/Header';
+import InteractiveBackground from '@/components/InteractiveBackground';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, Download, Share2, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+interface OrderSuccessPageProps {
+  orderDetails: OrderDetails;
+  orderNumber: string;
+  user: User | null;
+  cartItemsCount: number;
+  onContinueShopping: () => void;
+  onCartClick: () => void;
+  onLogin: () => void;
+  onLogout: () => void;
+}
+
+export default function OrderSuccessPage({
+  orderDetails,
+  orderNumber,
+  user,
+  cartItemsCount,
+  onContinueShopping,
+  onCartClick,
+  onLogin,
+  onLogout
+}: OrderSuccessPageProps) {
+  const [showAnimation, setShowAnimation] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowAnimation(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-background relative">
+      <InteractiveBackground />
+      
+      <Header 
+        cartItemsCount={cartItemsCount} 
+        onCartClick={onCartClick} 
+        onSearchClick={() => {}}
+        user={user}
+        onLogin={onLogin}
+        onLogout={onLogout}
+      />
+
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Success Animation */}
+          <div className={`mb-12 transition-all duration-1000 ${showAnimation ? 'scale-100 opacity-100' : 'scale-75 opacity-0'}`}>
+            <div className="relative mx-auto w-32 h-32 mb-8">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-green-600 rounded-full animate-ping opacity-20"></div>
+              <div className="relative bg-gradient-to-r from-green-400 to-green-600 rounded-full w-32 h-32 flex items-center justify-center">
+                <CheckCircle className="h-16 w-16 text-white animate-bounce" />
+              </div>
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 glow-text font-amiri bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+              تم تأكيد طلبك!
+            </h1>
+            
+            <p className="text-lg md:text-xl text-muted-foreground font-cairo">
+              شكراً لك! تم استلام طلبك وسيتم التواصل معك قريباً
+            </p>
+          </div>
+
+          {/* Order Details Card */}
+          <div className="glass-card p-8 mb-8 text-right">
+            <h2 className="text-2xl font-bold mb-6 text-primary font-tajawal">
+              تفاصيل الطلب
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="glass-card bg-primary/5 p-6">
+                <h3 className="font-bold text-primary mb-4 font-tajawal">معلومات الطلب</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">رقم الطلب:</span>
+                    <span className="font-mono text-primary">#{orderNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">التاريخ:</span>
+                    <span>{new Date().toLocaleDateString('ar-EG')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">الحالة:</span>
+                    <span className="text-green-600 font-semibold">مؤكد</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-card bg-secondary/5 p-6">
+                <h3 className="font-bold text-primary mb-4 font-tajawal">معلومات العميل</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">الاسم:</span>
+                    <span>{orderDetails.customerName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">الهاتف:</span>
+                    <span dir="ltr">{orderDetails.phone}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">المحافظة:</span>
+                    <span>{orderDetails.governorate}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-gradient-to-r from-primary/10 to-primary-glow/10 rounded-2xl border border-primary/20">
+              <p className="text-primary font-semibold text-sm">
+                📱 سيتم التواصل معك خلال 24 ساعة لتأكيد الطلب وترتيب التوصيل
+              </p>
+            </div>
+          </div>
+
+          {/* Next Steps */}
+          <div className="glass-card p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-primary font-tajawal">
+              ماذا بعد؟
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+              <div className="p-6 bg-gradient-to-br from-primary/5 to-primary-glow/5 rounded-2xl">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">📞</span>
+                </div>
+                <h3 className="font-bold mb-2 font-tajawal">تأكيد الطلب</h3>
+                <p className="text-sm text-muted-foreground font-cairo">
+                  سنتواصل معك لتأكيد الطلب والعنوان
+                </p>
+              </div>
+
+              <div className="p-6 bg-gradient-to-br from-secondary/5 to-accent/5 rounded-2xl">
+                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">📦</span>
+                </div>
+                <h3 className="font-bold mb-2 font-tajawal">التحضير</h3>
+                <p className="text-sm text-muted-foreground font-cairo">
+                  سيتم تحضير طلبك بعناية فائقة
+                </p>
+              </div>
+
+              <div className="p-6 bg-gradient-to-br from-accent/5 to-primary/5 rounded-2xl">
+                <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🚚</span>
+                </div>
+                <h3 className="font-bold mb-2 font-tajawal">التوصيل</h3>
+                <p className="text-sm text-muted-foreground font-cairo">
+                  توصيل مجاني لجميع المحافظات
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={onContinueShopping}
+              className="btn-primary px-8 py-6 text-lg font-semibold"
+            >
+              <ArrowRight className="h-5 w-5 ml-2" />
+              متابعة التسوق
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="glass-card px-8 py-6 text-lg font-semibold"
+              onClick={() => window.print()}
+            >
+              <Download className="h-5 w-5 ml-2" />
+              طباعة الطلب
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="glass-card px-8 py-6 text-lg font-semibold"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: 'طلب جديد',
+                    text: `تم تأكيد طلبي رقم #${orderNumber}`,
+                    url: window.location.href
+                  });
+                }
+              }}
+            >
+              <Share2 className="h-5 w-5 ml-2" />
+              مشاركة
+            </Button>
+          </div>
+
+          {/* Contact Info */}
+          <div className="mt-12 text-center">
+            <p className="text-muted-foreground mb-4 font-cairo">
+              في حالة وجود أي استفسار، يمكنك التواصل معنا:
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a 
+                href="tel:+201000000000" 
+                className="glass-card px-6 py-3 hover:bg-primary/5 transition-colors text-primary font-semibold"
+              >
+                📞 01000000000
+              </a>
+              <a 
+                href="https://wa.me/201000000000" 
+                className="glass-card px-6 py-3 hover:bg-green-50 transition-colors text-green-600 font-semibold"
+              >
+                💬 واتساب
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
