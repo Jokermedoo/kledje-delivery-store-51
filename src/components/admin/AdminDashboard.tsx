@@ -1,12 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { User } from '@/types/auth';
-import { productService } from '@/services/productService';
-import { orderService } from '@/services/orderService';
-import { storeService } from '@/services/storeService';
-import { Product } from '@/types/product';
-import { Order } from '@/types/auth';
-import { StoreSettings } from '@/types/store';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Product, Order, StoreSettings } from '@/types/supabase';
 import AdminHeader from './AdminHeader';
 import AdminStats from './AdminStats';
 import AdminOrders from './AdminOrders';
@@ -14,29 +10,50 @@ import AdminProducts from './AdminProducts';
 import StoreSettingsComponent from './StoreSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface AdminDashboardProps {
-  user: User;
-  onLogout: () => void;
-}
-
-export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
+export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
+  const { user, profile } = useAuth();
 
   useEffect(() => {
-    loadData();
-    loadStoreSettings();
-  }, []);
+    if (profile?.role === 'admin') {
+      loadData();
+      loadStoreSettings();
+    }
+  }, [profile]);
 
-  const loadData = () => {
-    setProducts(productService.getProducts());
-    setOrders(orderService.getOrders());
+  const loadData = async () => {
+    // Load products
+    const { data: productsData } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (productsData) {
+      setProducts(productsData);
+    }
+
+    // Load orders
+    const { data: ordersData } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (ordersData) {
+      setOrders(ordersData as Order[]);
+    }
   };
 
-  const loadStoreSettings = () => {
-    storeService.init();
-    setStoreSettings(storeService.getSettings());
+  const loadStoreSettings = async () => {
+    const { data } = await supabase
+      .from('store_settings')
+      .select('*')
+      .single();
+    
+    if (data) {
+      setStoreSettings(data);
+    }
   };
 
   const handleProductsChange = () => {
@@ -53,7 +70,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
 
   return (
     <div className="min-h-screen bg-background">
-      <AdminHeader user={user} onLogout={onLogout} />
+      <AdminHeader />
       
       <div className="container mx-auto px-4 py-8">
         <AdminStats orders={orders} />
@@ -74,7 +91,7 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
           </TabsContent>
 
           <TabsContent value="settings">
-            <StoreSettingsComponent onSettingsChange={handleStoreSettingsChange} />
+            <StoreSettingsComponent storeSettings={storeSettings} onSettingsChange={handleStoreSettingsChange} />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,10 +1,9 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { orderService } from '@/services/orderService';
-import { Order } from '@/types/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { Order } from '@/types/supabase';
 
 interface AdminOrdersProps {
   orders: Order[];
@@ -14,13 +13,29 @@ interface AdminOrdersProps {
 export default function AdminOrders({ orders, onOrdersChange }: AdminOrdersProps) {
   const { toast } = useToast();
 
-  const handleUpdateOrderStatus = (orderId: string, status: Order['status']) => {
-    orderService.updateOrderStatus(orderId, status);
-    toast({
-      title: "تم التحديث",
-      description: "تم تحديث حالة الطلب"
-    });
-    onOrdersChange();
+  const handleUpdateOrderStatus = async (orderId: string, status: Order['status']) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "تم التحديث",
+        description: "تم تحديث حالة الطلب"
+      });
+      onOrdersChange();
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء تحديث الطلب",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusColor = (status: Order['status']) => {
@@ -46,7 +61,7 @@ export default function AdminOrders({ orders, onOrdersChange }: AdminOrdersProps
   };
 
   return (
-    <Card>
+    <Card className="bg-card">
       <CardHeader>
         <CardTitle>الطلبات الحديثة ({orders.length})</CardTitle>
       </CardHeader>
@@ -56,46 +71,36 @@ export default function AdminOrders({ orders, onOrdersChange }: AdminOrdersProps
             <p className="text-center text-muted-foreground py-8">لا توجد طلبات حتى الآن</p>
           ) : (
             orders.map((order) => (
-              <div key={order.id} className="border border-border rounded-lg p-4">
+              <div key={order.id} className="border border-border rounded-lg p-4 bg-card">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h4 className="font-semibold">طلب #{order.id.slice(-6)}</h4>
-                    <p className="text-sm text-muted-foreground">{order.customerName}</p>
+                    <h4 className="font-semibold text-card-foreground">طلب #{order.id.slice(-6)}</h4>
+                    <p className="text-sm text-muted-foreground">{order.customer_name}</p>
                     <p className="text-sm text-muted-foreground">{order.phone}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(order.createdAt).toLocaleDateString('ar-EG')}
+                      {new Date(order.created_at).toLocaleDateString('ar-EG')}
                     </p>
                   </div>
                   <div className="text-left">
                     <Badge className={getStatusColor(order.status)}>
                       {getStatusText(order.status)}
                     </Badge>
-                    <p className="text-lg font-bold mt-1">{order.totalPrice} جنيه</p>
+                    <p className="text-lg font-bold mt-1 text-foreground">{order.total_price} جنيه</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-sm font-medium">العنوان:</p>
+                    <p className="text-sm font-medium text-card-foreground">العنوان:</p>
                     <p className="text-sm text-muted-foreground">
                       {order.address}, {order.city}, {order.governorate}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">المنتجات:</p>
-                    <div className="text-sm text-muted-foreground">
-                      {order.items.map((item, index) => (
-                        <div key={index}>
-                          {item.name} (الكمية: {item.quantity}) - {item.price * item.quantity} جنيه
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
 
                 {order.notes && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium">ملاحظات:</p>
+                    <p className="text-sm font-medium text-card-foreground">ملاحظات:</p>
                     <p className="text-sm text-muted-foreground">{order.notes}</p>
                   </div>
                 )}

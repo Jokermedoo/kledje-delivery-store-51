@@ -1,12 +1,11 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { productService } from '@/services/productService';
-import { Product } from '@/types/product';
+import { supabase } from '@/integrations/supabase/client';
+import { Product } from '@/types/supabase';
 import ProductDialog from './ProductDialog';
 
 interface AdminProductsProps {
@@ -29,14 +28,30 @@ export default function AdminProducts({ products, onProductsChange }: AdminProdu
     setIsDialogOpen(true);
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-      productService.deleteProduct(id);
-      toast({
-        title: "تم الحذف",
-        description: "تم حذف المنتج بنجاح"
-      });
-      onProductsChange();
+      try {
+        const { error } = await supabase
+          .from('products')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "تم الحذف",
+          description: "تم حذف المنتج بنجاح"
+        });
+        onProductsChange();
+      } catch (error) {
+        toast({
+          title: "خطأ",
+          description: "حدث خطأ أثناء حذف المنتج",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -48,7 +63,7 @@ export default function AdminProducts({ products, onProductsChange }: AdminProdu
 
   return (
     <>
-      <Card>
+      <Card className="bg-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>إدارة المنتجات ({products.length})</CardTitle>
           <Button onClick={handleAddProduct} className="btn-primary">
@@ -59,14 +74,14 @@ export default function AdminProducts({ products, onProductsChange }: AdminProdu
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {products.map((product) => (
-              <div key={product.id} className="border border-border rounded-lg p-4">
+              <div key={product.id} className="border border-border rounded-lg p-4 bg-card">
                 <img 
-                  src={product.image} 
+                  src={product.image_url || '/placeholder.svg'} 
                   alt={product.name}
                   className="w-full h-40 object-cover rounded-lg mb-3"
                 />
                 
-                <h4 className="font-semibold mb-2">{product.name}</h4>
+                <h4 className="font-semibold mb-2 text-card-foreground">{product.name}</h4>
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                   {product.description}
                 </p>
@@ -74,19 +89,14 @@ export default function AdminProducts({ products, onProductsChange }: AdminProdu
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex flex-col">
                     <span className="text-lg font-bold text-primary">{product.price} جنيه</span>
-                    {product.originalPrice && (
-                      <span className="text-sm line-through text-muted-foreground">
-                        {product.originalPrice} جنيه
-                      </span>
-                    )}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <Badge variant={product.inStock ? "default" : "secondary"}>
-                      {product.inStock ? "متوفر" : "نفد"}
+                    <Badge variant={product.stock_quantity > 0 ? "default" : "secondary"}>
+                      {product.stock_quantity > 0 ? `متوفر (${product.stock_quantity})` : "نفد"}
                     </Badge>
-                    {product.featured && (
+                    {product.is_active && (
                       <Badge variant="outline" className="text-xs">
-                        مميز
+                        نشط
                       </Badge>
                     )}
                   </div>
@@ -94,7 +104,7 @@ export default function AdminProducts({ products, onProductsChange }: AdminProdu
 
                 <div className="flex flex-col gap-1 mb-3">
                   <span className="text-xs text-muted-foreground">
-                    الفئة: {product.category === 'skincare' ? 'العناية بالبشرة' : 'العناية بالشعر'}
+                    الفئة: {product.category_ar}
                   </span>
                 </div>
                 
